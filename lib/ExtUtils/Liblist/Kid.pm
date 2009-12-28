@@ -53,6 +53,16 @@ sub _unix_os2_ext {
     my($pwd) = cwd(); # from Cwd.pm
     my($found) = 0;
 
+    # Handle possible -framework on darwin
+    if ($^O eq 'darwin') {
+        while ($potential_libs =~ s/(^|\s)(-((?:weak|reexport|lazy)_)?framework \s+ (\w+)(\.\w+)?) //x) {
+            # Assume it can find them for now
+            # here we should check all known framework paths and any paths given as -F
+            $found++;
+            push @ldloadlibs, $2;
+        }
+    }
+    
     foreach my $thislib (split ' ', $potential_libs) {
 
 	# Handle possible linker path arguments.
@@ -80,7 +90,7 @@ sub _unix_os2_ext {
 	    push(@ldloadlibs, "$rtype$thislib");
 	    next;
 	}
-
+    
 	# Handle possible library arguments.
 	unless ($thislib =~ s/^-l//){
 	  warn "Unrecognized argument in LIBS ignored: '$thislib'\n";
